@@ -1724,6 +1724,66 @@ include_dir 'conf.d'
      <title>Memory</title>
 
      <variablelist>
+     <varlistentry id="guc-memory-protection-mode" xreflabel="memory_protection_mode">
+      <term><varname>memory_protection_mode</varname> (<type>enum</type>)</term>
+      <listitem>
+       <para>
+        Controls experimental instance memory protection. The default is
+        <literal>off</literal>. The <literal>observe</literal> mode samples
+        local Linux cgroup v2 memory usage without taking action.
+        <literal>enforce</literal> enables cooperative query cancellation and
+        connection termination when fresh samples indicate pressure and the
+        cgroup boundary is trusted. A background worker slot is reserved at
+        startup, including when the mode is off, to allow configuration reload.
+        If no slot is available the observer does not run.
+       </para>
+       <para>
+        Members of <literal>pg_read_all_stats</literal> can inspect
+        <function>pg_memory_protection_status()</function>, including boundary
+        trust and cumulative accepted cancellation/termination requests. These
+        counters do not prove that a request executed or memory was released.
+        Unknown limits, stale samples, unsupported platforms, hidden cgroup
+        roots, or constrained ancestors prevent automatic actions. The native
+        provider requires a finite local limit and visible, unlimited ancestors.
+        Deployments must place the instance in a dedicated cgroup. Taurus must
+        additionally certify SAL/IPC cleanup before enabling enforcement.
+        These settings can only be set in the server configuration file or on
+        the server command line.
+       </para>
+       <para>
+        Only registered, non-superuser client sessions are eligible. Parallel
+        workers contribute bounded private-memory samples to their leader and
+        are never targeted independently. System processes and superuser login
+        sessions are protected. Private-memory estimates guide selection;
+        subsequent cgroup samples determine the actual effect. Cancellation
+        preserves PostgreSQL failed-transaction semantics; termination closes
+        the connection and can leave a client uncertain about commit outcome.
+        This experimental feature does not guarantee prevention of all OOMs.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-memory-protection-headroom" xreflabel="memory_protection_headroom">
+      <term><varname>memory_protection_headroom</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Sets the headroom used to classify observed memory pressure. Values
+        without a unit are in kilobytes. The default is zero, which disables
+        classification without disabling sampling. A positive value must allow
+        a recovery watermark of 1.5 times the headroom below the observed limit;
+        otherwise the classification is <literal>stale</literal>.
+       </para>
+       <para>
+        The experimental policy samples every 100 milliseconds, enters pressure
+        after two consecutive samples with remaining memory at or below the
+        headroom, and enters critical pressure immediately at half the headroom.
+        Three samples at or above 1.5 times the headroom restore normal status.
+        Samples older than 300 milliseconds are stale. These thresholds also
+        gate enforcement; they are not a memory reservation or OOM guarantee.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-shared-buffers" xreflabel="shared_buffers">
       <term><varname>shared_buffers</varname> (<type>integer</type>)
       <indexterm>

@@ -64,6 +64,7 @@ OBJS = \
 	mac.o \
 	mac8.o \
 	mcxtfuncs.o \
+	memory_protectorfuncs.o \
 	misc.o \
 	multirangetypes.o \
 	multirangetypes_selfuncs.o \

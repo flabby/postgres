@@ -17,6 +17,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/atomics.h"
+#include "postmaster/memory_protector.h"
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/postmaster.h"
 #include "replication/logicallauncher.h"
@@ -118,6 +119,9 @@ static const struct
 }			InternalBGWorkers[] =
 
 {
+	{
+		"MemoryProtectorMain", MemoryProtectorMain
+	},
 	{
 		"ParallelWorkerMain", ParallelWorkerMain
 	},

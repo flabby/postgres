@@ -1,0 +1,93 @@
+CREATE EXTENSION test_memory_protector;
+SELECT test_mp_policy();
+ test_mp_policy 
+----------------
+ t
+(1 row)
+
+SELECT test_mp_pressure_parser();
+ test_mp_pressure_parser 
+-------------------------
+ t
+(1 row)
+
+SELECT test_mp_observer();
+ test_mp_observer 
+------------------
+ t
+(1 row)
+
+SELECT mode, observer_pid > 0 AS running, sample_age_ms >= 0 AS sampled
+FROM pg_memory_protection_status();
+  mode   | running | sampled 
+---------+---------+---------
+ observe | t       | t
+(1 row)
+
+CREATE ROLE mp_unprivileged;
+SET ROLE mp_unprivileged;
+SELECT * FROM pg_memory_protection_status();
+ERROR:  permission denied to read memory protection status
+RESET ROLE;
+GRANT pg_read_all_stats TO mp_unprivileged;
+SET ROLE mp_unprivileged;
+SELECT mode FROM pg_memory_protection_status();
+  mode   
+---------
+ observe
+(1 row)
+
+RESET ROLE;
+DROP ROLE mp_unprivileged;
+ALTER SYSTEM SET memory_protection_mode = 'off';
+SELECT pg_reload_conf();
+ pg_reload_conf 
+----------------
+ t
+(1 row)
+
+SELECT test_mp_wait_for_mode('off');
+ test_mp_wait_for_mode 
+-----------------------
+ t
+(1 row)
+
+SELECT mode, sample_valid, reason FROM pg_memory_protection_status();
+ mode | sample_valid |  reason  
+------+--------------+----------
+ off  | f            | disabled
+(1 row)
+
+ALTER SYSTEM RESET memory_protection_mode;
+SELECT pg_reload_conf();
+ pg_reload_conf 
+----------------
+ t
+(1 row)
+
+SELECT test_mp_wait_for_mode('observe');
+ test_mp_wait_for_mode 
+-----------------------
+ t
+(1 row)
+
+ALTER SYSTEM SET memory_protection_mode = 'enforce';
+ALTER SYSTEM RESET memory_protection_mode;
+SELECT test_mp_wait_for_restart();
+ test_mp_wait_for_restart 
+--------------------------
+ t
+(1 row)
+
+SELECT test_mp_observer();
+ test_mp_observer 
+------------------
+ t
+(1 row)
+
+SELECT test_mp_selection();
+ test_mp_selection 
+-------------------
+ t
+(1 row)
+

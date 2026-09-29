@@ -21,6 +21,10 @@ OBJS = \
 	fork_process.o \
 	interrupt.o \
 	launch_backend.o \
+	memory_protector.o \
+	memory_observer.o \
+	memory_actions.o \
+	memory_pressure.o \
 	pgarch.o \
 	pmchild.o \
 	postmaster.o \

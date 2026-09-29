@@ -1,0 +1,36 @@
+Instance memory protection tests
+================================
+
+The SQL extension checks deterministic pressure state transitions, cgroup and
+private-memory parsers, candidate ranking, observer permissions and reload/restart.
+
+Run in a configured build tree:
+  make -C src/test/modules/test_memory_protector check
+
+Build and install the test extension into a PRIVATE PostgreSQL installation,
+then run the stdlib-only libpq integration suite (no TAP dependencies):
+  make -C src/test/modules/test_memory_protector all install
+  python3 /absolute/source/path/src/test/modules/test_memory_protector/test_actions.py /absolute/private/install/prefix
+
+This creates a disposable socket-only cluster. It tests observe gating,
+simple/extended query cancellation, failed transactions, stale generations and
+statements, action expiry, deferred escalation, mode-off revocation, protected
+superuser sessions, idle/active termination, and parallel worker protection and
+cleanup. Test-only dispatch functions are revoked from PUBLIC; the dispatch
+function also checks superuser(). Never install this extension in production.
+No test fabricates actual OOM or modifies host cgroups.
+
+macOS/non-Linux reports unsupported_platform. The action suite injects requests
+through the test-only dispatcher, so passing it does not certify automatic Linux
+pressure selection. Real procfs sampling, cgroup enforcement under load, jemalloc
+behavior, and Taurus SAL/IPC cleanup require separate Linux/Taurus acceptance.
+The native collector permits enforcement only with a finite local limit and a
+visible true hierarchy root with unlimited ancestors. Hidden or constrained
+ancestor layouts remain observational. The instance must have a dedicated cgroup.
+
+Parallel private-memory estimates are lower bounds: each round reads at most
+eight eligible leaders and eight workers divided fairly among those leaders.
+Each leader has a rotating worker cursor. Missing/stale measurements are excluded.
+
+Catalog changes require a new development cluster. Rebuild the extension when
+its backend header changes; do not use a stale test extension binary.

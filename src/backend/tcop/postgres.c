@@ -18,6 +18,7 @@
  */
 
 #include "postgres.h"
+#include "postmaster/memory_protector.h"
 
 #include <fcntl.h>
 #include <limits.h>
@@ -1107,6 +1108,7 @@ exec_simple_query(const char *query_string)
 		const char *cmdtagname;
 		size_t		cmdtaglen;
 
+		MPStatementBegin();
 		pgstat_report_query_id(0, true);
 		pgstat_report_plan_id(0, true);
 
@@ -3467,6 +3469,8 @@ ProcessInterrupts(void)
 		}
 	}
 
+	MPProcessInterrupt();
+
 	if (RecoveryConflictPending)
 		ProcessRecoveryConflictInterrupts();
 
@@ -4409,6 +4413,7 @@ PostgresMain(const char *dbname, const char *username)
 
 		/* Prevent interrupts while cleaning up */
 		HOLD_INTERRUPTS();
+		MPStatementEnd();
 
 		/*
 		 * Forget any pending QueryCancel request, since we're returning to
@@ -4694,6 +4699,7 @@ PostgresMain(const char *dbname, const char *username)
 		 * conditional since we don't want, say, reads on behalf of COPY FROM
 		 * STDIN doing the same thing.)
 		 */
+		MPBackendIdle(IsTransactionOrTransactionBlock());
 		DoingCommandRead = true;
 
 		/*
@@ -4749,6 +4755,7 @@ PostgresMain(const char *dbname, const char *username)
 		if (ignore_till_sync && firstchar != EOF)
 			continue;
 
+		MPStatementBegin();
 		switch (firstchar)
 		{
 			case PqMsg_Query:
@@ -5022,6 +5029,7 @@ PostgresMain(const char *dbname, const char *username)
 						 errmsg("invalid frontend message type %d",
 								firstchar)));
 		}
+		MPStatementEnd();
 	}							/* end of input-reading loop */
 }
 

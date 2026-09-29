@@ -29,6 +29,7 @@
  */
 typedef enum
 {
+	PROCSIG_MEMORY_PROTECTION,
 	PROCSIG_CATCHUP_INTERRUPT,	/* sinval catchup interrupt */
 	PROCSIG_NOTIFY_INTERRUPT,	/* listen/notify interrupt */
 	PROCSIG_PARALLEL_MESSAGE,	/* message from cooperating parallel backend */

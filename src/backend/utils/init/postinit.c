@@ -14,6 +14,7 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include "postmaster/memory_protector.h"
 
 #include <ctype.h>
 #include <fcntl.h>
@@ -1234,6 +1235,8 @@ InitPostgres(const char *in_dbname, Oid dboid,
 	/* close the transaction we started above */
 	if (!bootstrap)
 		CommitTransactionCommand();
+	if (!bootstrap)
+		MPBackendRegister(am_superuser);
 }
 
 /*

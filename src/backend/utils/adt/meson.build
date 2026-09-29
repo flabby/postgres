@@ -61,6 +61,7 @@ backend_sources += files(
   'mac.c',
   'mac8.c',
   'mcxtfuncs.c',
+  'memory_protectorfuncs.c',
   'misc.c',
   'multirangetypes.c',
   'multirangetypes_selfuncs.c',

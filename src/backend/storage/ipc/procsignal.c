@@ -13,6 +13,7 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include "postmaster/memory_protector.h"
 
 #include <signal.h>
 #include <unistd.h>
@@ -682,6 +683,9 @@ CheckProcSignal(ProcSignalReason reason)
 void
 procsignal_sigusr1_handler(SIGNAL_ARGS)
 {
+	if (CheckProcSignal(PROCSIG_MEMORY_PROTECTION))
+		MPHandleInterrupt();
+
 	if (CheckProcSignal(PROCSIG_CATCHUP_INTERRUPT))
 		HandleCatchupInterrupt();
 

@@ -1,0 +1,27 @@
+CREATE EXTENSION test_memory_protector;
+SELECT test_mp_policy();
+SELECT test_mp_pressure_parser();
+SELECT test_mp_observer();
+SELECT mode, observer_pid > 0 AS running, sample_age_ms >= 0 AS sampled
+FROM pg_memory_protection_status();
+CREATE ROLE mp_unprivileged;
+SET ROLE mp_unprivileged;
+SELECT * FROM pg_memory_protection_status();
+RESET ROLE;
+GRANT pg_read_all_stats TO mp_unprivileged;
+SET ROLE mp_unprivileged;
+SELECT mode FROM pg_memory_protection_status();
+RESET ROLE;
+DROP ROLE mp_unprivileged;
+ALTER SYSTEM SET memory_protection_mode = 'off';
+SELECT pg_reload_conf();
+SELECT test_mp_wait_for_mode('off');
+SELECT mode, sample_valid, reason FROM pg_memory_protection_status();
+ALTER SYSTEM RESET memory_protection_mode;
+SELECT pg_reload_conf();
+SELECT test_mp_wait_for_mode('observe');
+ALTER SYSTEM SET memory_protection_mode = 'enforce';
+ALTER SYSTEM RESET memory_protection_mode;
+SELECT test_mp_wait_for_restart();
+SELECT test_mp_observer();
+SELECT test_mp_selection();

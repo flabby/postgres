@@ -1,0 +1,4 @@
+comment = 'Tests for the instance memory protector'
+default_version = '1.0'
+module_pathname = '$libdir/test_memory_protector'
+relocatable = true

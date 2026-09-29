@@ -34,6 +34,7 @@
 #include "miscadmin.h"
 #include "optimizer/optimizer.h"
 #include "pgstat.h"
+#include "postmaster/memory_protector.h"
 #include "storage/ipc.h"
 #include "storage/predicate.h"
 #include "storage/spin.h"
@@ -95,6 +96,7 @@ typedef struct FixedParallelState
 	PGPROC	   *parallel_leader_pgproc;
 	pid_t		parallel_leader_pid;
 	ProcNumber	parallel_leader_proc_number;
+	MPIdentity	memory_leader;
 	TimestampTz xact_ts;
 	TimestampTz stmt_ts;
 	SerializableXactHandle serializable_xact_handle;
@@ -352,6 +354,13 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	fps->parallel_leader_pgproc = MyProc;
 	fps->parallel_leader_pid = MyProcPid;
 	fps->parallel_leader_proc_number = MyProcNumber;
+	{
+		MPCandidate candidate;
+
+		memset(&fps->memory_leader, 0, sizeof(fps->memory_leader));
+		if (MPReadCandidate(MyProcNumber, &candidate))
+			fps->memory_leader = candidate.id;
+	}
 	fps->xact_ts = GetCurrentTransactionStartTimestamp();
 	fps->stmt_ts = GetCurrentStatementStartTimestamp();
 	fps->serializable_xact_handle = ShareSerializableXact();
@@ -1440,6 +1449,7 @@ ParallelWorkerMain(Datum main_arg)
 											  fps->authenticated_user_id,
 											  BGWORKER_BYPASS_ALLOWCONN |
 											  BGWORKER_BYPASS_ROLELOGINCHECK);
+	MPParallelRegister(&fps->memory_leader);
 
 	/*
 	 * Set the client encoding to the database encoding, since that is what

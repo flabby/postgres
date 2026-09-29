@@ -4010,6 +4010,14 @@
   prorettype => 'text', proargtypes => 'oid',
   prosrc => 'pg_get_function_sqlbody' },
 
+{ oid => '9100', descr => 'read-only instance memory pressure observation',
+  proname => 'pg_memory_protection_status', provolatile => 'v',
+  proparallel => 'r', prorettype => 'record', proargtypes => '',
+  proallargtypes => '{text,text,int4,int8,int8,bool,text,int8,int8,bool,int8,int8}',
+  proargmodes => '{o,o,o,o,o,o,o,o,o,o,o,o}',
+  proargnames => '{mode,state,observer_pid,limit_bytes,current_bytes,sample_valid,reason,sample_age_ms,headroom_bytes,boundary_trusted,cancel_requests,terminate_requests}',
+  prosrc => 'pg_memory_protection_status' },
+
 { oid => '1686', descr => 'list of SQL keywords',
   proname => 'pg_get_keywords', procost => '10', prorows => '500',
   proretset => 't', provolatile => 's', prorettype => 'record',

@@ -64,6 +64,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parser.h"
 #include "pgstat.h"
+#include "postmaster/memory_protector.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgworker_internals.h"
 #include "postmaster/bgwriter.h"
@@ -2162,6 +2163,15 @@ struct config_bool ConfigureNamesBool[] =
 
 struct config_int ConfigureNamesInt[] =
 {
+	{
+		{"memory_protection_headroom", PGC_SIGHUP, RESOURCES_MEM,
+			gettext_noop("Sets headroom for memory pressure observation."),
+			gettext_noop("Zero disables pressure classification."), GUC_UNIT_KB
+		},
+		&memory_protection_headroom,
+		0, 0, INT_MAX,
+		NULL, NULL, NULL
+	},
 	{
 		{"archive_timeout", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Sets the amount of time to wait before forcing a "
@@ -5014,8 +5024,24 @@ struct config_string ConfigureNamesString[] =
 };
 
 
+static const struct config_enum_entry memory_protection_modes[] = {
+	{"off", MP_MODE_OFF, false},
+	{"observe", MP_MODE_OBSERVE, false},
+	{"enforce", MP_MODE_ENFORCE, false},
+	{NULL, 0, false}
+};
+
 struct config_enum ConfigureNamesEnum[] =
 {
+	{
+		{"memory_protection_mode", PGC_SIGHUP, RESOURCES_MEM,
+			gettext_noop("Controls instance memory observation and protection."),
+			gettext_noop("Enforcement cancels queries or terminates eligible user connections under trusted memory pressure.")
+		},
+		&memory_protection_mode,
+		MP_MODE_OFF, memory_protection_modes,
+		NULL, NULL, NULL
+	},
 	{
 		{"backslash_quote", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Sets whether \"\\'\" is allowed in string literals."),
